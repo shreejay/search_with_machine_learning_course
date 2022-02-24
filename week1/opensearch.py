@@ -6,7 +6,7 @@ def get_opensearch():
     if 'opensearch' not in g:
         host = 'localhost'
         port = 9200
-        with open("/workspace/secrets.txt") as f:
+        with open("secrets.txt") as f:
             lines = f.readlines()
             username = lines[0].strip()
             password = lines[1].strip()

@@ -74,10 +74,10 @@ def query():
         query_obj = create_query("*", [], sort, sortDir)
 
     print("query obj: {}".format(query_obj))
-    response = None   # TODO: Replace me with an appropriate call to OpenSearch
+    response = opensearch.search(index="bbuy_products", body=query_obj)
     # Postprocess results here if you so desire
 
-    #print(response)
+    print(response)
     if error is None:
         return render_template("search_results.jinja2", query=user_query, search_response=response,
                                display_filters=display_filters, applied_filters=applied_filters,
@@ -89,12 +89,45 @@ def query():
 def create_query(user_query, filters, sort="_score", sortDir="desc"):
     print("Query: {} Filters: {} Sort: {}".format(user_query, filters, sort))
     query_obj = {
-        'size': 10,
+        "size": 10,
+        "_source": ["productId", "name", "shortDescription", "longDescription", "department", "salesRankShortTerm",  "salesRankMediumTerm", "salesRankLongTerm", "regularPrice"],
         "query": {
-            "match_all": {} # Replace me with a query that both searches and filters
+            "function_score": {
+                "query": {
+                "query_string": {
+                            "query": user_query,
+                            "fields": ["name^1000", "shortDescription^50", "longDescription^10", "department"]
+                    }
+                },
+                "boost_mode": "multiply",
+                "score_mode": "multiply",
+                "functions": [
+                ]
+            }
+
         },
-        "aggs": {
-            #TODO: FILL ME IN
+        "aggs" : {
+            "department" : {
+                "terms" : { "field" : "department.keyword" , "size":100000}
+            },
+            "regularPrice": {
+                    "range": {
+                        "field": "regularPrice",
+                        "ranges": [
+                            {"key": "$", "to": 100},
+                            {"key": "$$", "from": 100, "to": 200},
+                            {"key": "$$$", "from": 200, "to": 300},
+                            {"key": "$$$$", "from": 300, "to": 400},
+                            {"key": "$$$$$", "from": 400, "to": 500},
+                            {"key": "$$$$$$", "from": 500},
+                        ]
+                    }
+            },
+            "missing_images": {
+                "missing": { "field": "image" }
+    }
+            
         }
+        
     }
     return query_obj

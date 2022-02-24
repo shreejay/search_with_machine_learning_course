@@ -129,3 +129,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+#Folders for local use - shreejay - windows 10
+NotesAndDataDoNotCheckIn/
+.vscode/
+week1-venv/
+secrets.txt
